@@ -6,16 +6,18 @@ with open("token.txt",'r') as f:
 
 REMINDER_INTERVAL = 20
 
+current_jobs = []
+
 client = discord.Client()
 
 async def posture_check_channel(channel):
     await client.wait_until_ready()
-    while not client.is_closed():
+    while not client.is_closed() and channel.id in current_jobs:
         await channel.send("Hello friends, time to check your posture!")
         await asyncio.sleep(REMINDER_INTERVAL)
 
 async def posture_check_user(user):
-    while user.status != discord.Status.offline:
+    while user.status != discord.Status.offline and user.id in current_jobs:
         await user.send("Hello " + user.name + "! It's time to check your posture")
         await asyncio.sleep(REMINDER_INTERVAL)
         
@@ -29,10 +31,17 @@ async def on_message(message):
         if message.content == "!hi" or message.content == "!hello":
             await channel.send("Hello %s!"%message.author.name)
         elif message.content == "!setchannel":
+            current_jobs.append(channel.id)
             client.loop.create_task(posture_check_channel(channel))
-            # TODO - killing of tasks (stop channel)
+        elif message.content == "!releasechannel":
+            current_jobs.remove(channel.id)
+            await channel.send("No more posture checks for this channel.")
         elif message.content == "!letsgetpersonal":
+            current_jobs.append(message.author.id)
             client.loop.create_task(posture_check_user(message.author))
+        elif message.content == "!unsubscribe":
+            current_jobs.remove(message.author.id)
+            await message.author.send("You have successfully unsubscribed.")
         elif message.content.startswith('!interval'):
             try:
                 REMINDER_INTERVAL = int(message.content.split(' ')[1])
