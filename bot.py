@@ -4,20 +4,21 @@ import asyncio
 with open("token.txt",'r') as f:
     TOKEN = f.readline().strip()
 
-with open("channel.txt",'r') as f:
-    CHANNEL_ID = f.readline().strip()
-
 REMINDER_INTERVAL = 20
 
 client = discord.Client()
 
-async def posture_check():
+async def posture_check_channel(channel):
     await client.wait_until_ready()
-    channel = client.get_channel(int(CHANNEL_ID))
     while not client.is_closed():
         await channel.send("Hello friends, time to check your posture!")
         await asyncio.sleep(REMINDER_INTERVAL)
 
+async def posture_check_user(user):
+    while user.status != discord.Status.offline:
+        await user.send("Hello " + user.name + "! It's time to check your posture")
+        await asyncio.sleep(REMINDER_INTERVAL)
+        
 @client.event
 async def on_message(message):
     global REMINDER_INTERVAL
@@ -27,6 +28,11 @@ async def on_message(message):
     if message.content.startswith('!'):
         if message.content == "!hi" or message.content == "!hello":
             await channel.send("Hello %s!"%message.author.name)
+        elif message.content == "!setchannel":
+            client.loop.create_task(posture_check_channel(channel))
+            # TODO - killing of tasks (stop channel)
+        elif message.content == "!letsgetpersonal":
+            client.loop.create_task(posture_check_user(message.author))
         elif message.content.startswith('!interval'):
             try:
                 REMINDER_INTERVAL = int(message.content.split(' ')[1])
@@ -44,6 +50,5 @@ async def on_ready():
     print(client.user.name)
     print(client.user.id)
     print('------')
-
-client.loop.create_task(posture_check())
+    
 client.run(TOKEN)
