@@ -14,7 +14,6 @@ async def posture_check_channel(channel):
     await client.wait_until_ready()
     while not client.is_closed() and channel.id in current_jobs:
         await channel.send("Hello friends, time to check your posture!")
-        print("Job %s has time %s"%(channel.id,current_jobs[channel.id]))
         await asyncio.sleep(current_jobs[channel.id])
 
 async def posture_check_user(user):
@@ -50,14 +49,12 @@ async def on_message(message):
         elif message.content.startswith('!interval'):
             try:
                 REMINDER_INTERVAL = int(message.content.split(' ')[1])
-                print(type(message.channel.type))
                 if message.channel.type == discord.ChannelType.text:
                     current_jobs[channel.id] = REMINDER_INTERVAL
                 else:
                     current_jobs[message.author.id] = REMINDER_INTERVAL
                 if REMINDER_INTERVAL != 1:
                     await channel.send("The interval is now set as '%i' seconds."%REMINDER_INTERVAL)
-                    print("Job %s has time %s"%(channel.id,current_jobs[channel.id]))
                 else:
                     await channel.send("The interval is now set as 1 second.")
             except:
