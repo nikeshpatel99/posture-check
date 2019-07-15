@@ -35,20 +35,34 @@ async def on_message(message):
             msg = "!setchannel :  add a channel to receive reminders\n!releasechannel : remove channel from receiving list\n!letsgetpersonal : subscribe to pm reminders\n!unsubscribe : unsubscribe from pm reminders\n!interval 30 : set the reminder interval to 30s (hint: you can change the 30)"
             await channel.send(msg)
         elif message.content == "!setchannel":
-            current_jobs[channel.id] = DEFAULT_REMINDER_INTERVAL
-            client.loop.create_task(posture_check_channel(channel))
+            if channel.id in current_jobs:
+                await channel.send("You already have reminders set for this channel!")
+            else:
+                current_jobs[channel.id] = DEFAULT_REMINDER_INTERVAL
+                client.loop.create_task(posture_check_channel(channel))
         elif message.content == "!releasechannel":
-            del current_jobs[channel.id]
-            await channel.send("No more posture checks for this channel.")
+            if channel.id in current_jobs:
+                del current_jobs[channel.id]
+                await channel.send("No more posture checks for this channel.")
+            else:
+                await channel.send("You aren't receiving reminders on this channel!")
         elif message.content == "!letsgetpersonal":
-            current_jobs[message.author.id] = DEFAULT_REMINDER_INTERVAL
-            client.loop.create_task(posture_check_user(message.author))
+            if message.author.id in current_jobs:
+                await message.author.send("You already receive personal reminders!")
+            else:
+                current_jobs[message.author.id] = DEFAULT_REMINDER_INTERVAL
+                client.loop.create_task(posture_check_user(message.author))
         elif message.content == "!unsubscribe":
-            del current_jobs[message.author.id]
-            await message.author.send("You have successfully unsubscribed.")
+            if message.author.id in current_jobs:
+                del current_jobs[message.author.id]
+                await message.author.send("You have successfully unsubscribed.")
+            else:
+                await message.author.send("You can't unsubscribe if you haven't subscribed!")
         elif message.content.startswith('!interval'):
             try:
                 REMINDER_INTERVAL = int(message.content.split(' ')[1])
+                if REMINDER_INTERVAL < 1:
+                    raise ValueError()
                 if message.channel.type == discord.ChannelType.text:
                     current_jobs[channel.id] = REMINDER_INTERVAL
                 else:
