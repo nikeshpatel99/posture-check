@@ -30,6 +30,9 @@ async def on_message(message):
     if message.content.startswith('!'):
         if message.content == "!hi" or message.content == "!hello":
             await channel.send("Hello %s!"%message.author.name)
+        elif message.content == "!help":
+            msg = "!setchannel :  add a channel to receive reminders\n!releasechannel : remove channel from receiving list\n!letsgetpersonal : subscribe to pm reminders\n!unsubscribe : unsubscribe from pm reminders\n!interval 30 : set the reminder interval to 30s (hint: you can change the 30)"
+            await channel.send(msg)
         elif message.content == "!setchannel":
             current_jobs.append(channel.id)
             client.loop.create_task(posture_check_channel(channel))
@@ -51,6 +54,8 @@ async def on_message(message):
                     await channel.send("The interval is now set as 1 second.")
             except:
                 await channel.send("I don't recognise that as a number :(")
+        else:
+            await channel.send("I don't recognise that command :(")
 
 
 @client.event
